@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mise à jour produit</title>
+</head>
+
+<body>
+    <h3>Produits actuels dans le centre logistique</h3>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Prix</th>
+            <th>Description</th>
+        </tr>
+        {% for produit in produits %}
+        <tr>
+            <td>{{ produit.id }}</td>
+            <td>{{ produit.nom }}</td>
+            <td>{{ produit.prix }}</td>
+            <td>{{ produit.description }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+    <h3>Modifier un produit</h3>
+    <form method="post" action="/maj_produit">
+        <label>ID produit:</label>
+        <input name="produit_id" type="number" required>
+
+        <label>Nouveau nom:</label>
+        <input name="nom" type="text">
+
+        <label>Nouveau prix:</label>
+        <input name="prix" type="number" step="0.01">
+
+        <label>Nouvelle description:</label>
+        <input name="description" type="text">
+
+        <button type="submit">Mettre à jour</button>
+    </form>
+
+    {% if message %}
+    <p style="color: green">{{ message }}</p>
+    {% endif %}
+
+</body>
+
+</html>

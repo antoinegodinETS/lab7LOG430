@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: API Gateway - Microservices Architecture
+  description: Interface centralisée pour les services clients, panier, et commande.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Passerelle locale
+
+paths:
+  /clients:
+    get:
+      summary: Obtenir la liste des clients
+      responses:
+        '200':
+          description: Liste des clients
+    post:
+      summary: Créer un nouveau client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreate'
+      responses:
+        '200':
+          description: Client créé
+
+  /panier:
+    post:
+      summary: Ajouter un article au panier (load balanced)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanierItemCreate'
+      responses:
+        '200':
+          description: Article ajouté
+
+  /panier/{item_id}:
+    delete:
+      summary: Supprimer un article du panier
+      parameters:
+        - in: path
+          name: item_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Article supprimé
+
+  /panier/{client_id}:
+    get:
+      summary: Obtenir le panier d’un client
+      parameters:
+        - in: path
+          name: client_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Contenu du panier
+
+  /commande:
+    post:
+      summary: Créer une commande
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandeCreate'
+      responses:
+        '200':
+          description: Commande créée
+
+  /commande/{commande_id}:
+    get:
+      summary: Obtenir une commande par ID
+      parameters:
+        - in: path
+          name: commande_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Détails de la commande
+
+components:
+  schemas:
+    ClientCreate:
+      type: object
+      properties:
+        nom:
+          type: string
+        email:
+          type: string
+      required:
+        - nom
+        - email
+
+    PanierItemCreate:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        produit_id:
+          type: integer
+        quantite:
+          type: integer
+      required:
+        - client_id
+        - produit_id
+        - quantite
+
+    CommandeCreate:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        produits:
+          type: array
+          items:
+            type: object
+            properties:
+              produit_id:
+                type: integer
+              quantite:
+                type: integer
+            required:
+              - produit_id
+              - quantite
+      required:
+        - client_id
+        - produits

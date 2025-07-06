@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Logistique</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <h1>Stock du Centre Logistique</h1>
+    <a href="/">← Retour</a>
+    <table>
+        <tr>
+            <th>ID Produit</th>
+            <th>Nom</th>
+            <th>Quantité</th>
+        </tr>
+        {% for item in stock %}
+        <tr>
+            <td>{{ item.produit_id }}</td>
+            <td>{{ item.nom }}</td>
+            <td>{{ item.quantite }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>

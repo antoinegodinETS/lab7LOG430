@@ -1,0 +1,13 @@
+sqlalchemy
+tabulate
+pytest
+flake8
+psycopg[c]
+uvicorn
+fastapi
+jinja2
+python-multipart
+httpx
+prometheus_fastapi_instrumentator
+loguru
+locust

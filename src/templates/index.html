@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Interface principale</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        function toggleActions(sectionId) {
+            document.querySelectorAll('.action-section').forEach(el => el.style.display = 'none');
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+        {% if active_section %}
+        window.addEventListener('DOMContentLoaded', function () {
+            toggleActions("{{ active_section }}");
+        });
+        {% endif %}
+    </script>
+</head>
+
+<body>
+    <h1>Choisir un domaine</h1>
+
+    <div class="domains">
+        <button onclick="toggleActions('maison_mere')">Maison Mère</button>
+        <button onclick="toggleActions('magasin')">Magasin</button>
+        <button onclick="toggleActions('logistique')">Logistique</button>
+    </div>
+
+    <div id="maison_mere" class="action-section" style="display:none">
+        <h2>Actions Maison Mère</h2>
+        <form method="post" action="/execute">
+            <input type="hidden" name="action" value="rapport">
+            <input type="hidden" name="section" value="maison_mere">
+            <button type="submit">Générer rapport des ventes</button>
+        </form>
+
+        <form method="get" action="/performances">
+            <input type="hidden" name="action" value="performances">
+            <input type="hidden" name="section" value="maison_mere">
+            <button type="submit">Visualiser performances magasins</button>
+        </form>
+
+        <form method="get" action="/maj_produit">
+            <input type="hidden" name="action" value="maj_produit">
+            <input type="hidden" name="section" value="maison_mere">
+            <button type="submit">Mettre à jour produit</button>
+        </form>
+        {% if result.ventes_par_magasin %}
+        <h3>Ventes par magasin</h3>
+        <table>
+            <tr>
+                <th>Magasin</th>
+                <th>Total des ventes ($)</th>
+            </tr>
+            {% for nom, total in result.ventes_par_magasin %}
+            <tr>
+                <td>{{ nom }}</td>
+                <td>{{ "%.2f"|format(total) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        {% if result.produits_vendus %}
+        <h3>Produits les plus vendus</h3>
+        <table>
+            <tr>
+                <th>Produit</th>
+                <th>Quantité</th>
+            </tr>
+            {% for nom, quantite in result.produits_vendus %}
+            <tr>
+                <td>{{ nom }}</td>
+                <td>{{ quantite }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        {% if result.stock_restants %}
+        <h3>Stocks restants dans les magasins</h3>
+        <table>
+            <tr>
+                <th>Magasin</th>
+                <th>Produit</th>
+                <th>Quantité</th>
+            </tr>
+            {% for magasin, produit, quantite in result.stock_restants %}
+            <tr>
+                <td>{{ magasin }}</td>
+                <td>{{ produit }}</td>
+                <td>{{ quantite }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+    </div>
+
+    <div id="magasin" class="action-section" style="display:none">
+        <h2>Actions Magasin</h2>
+
+        <h3>Légende des ID de magasins</h3>
+        <ul>
+            <li>1 — Magasin Plateau</li>
+            <li>2 — Magasin Rosemont</li>
+            <li>3 — Magasin Vieux-Port</li>
+            <li>4 — Magasin Verdun</li>
+            <li>5 — Magasin Saint-Laurent</li>
+        </ul>
+
+        <form method="post" action="/execute">
+            <input type="hidden" name="action" value="reapprovisionnement">
+            <input type="hidden" name="section" value="magasin">
+            <label>ID produit:</label><input name="produit_id" type="text">
+            <label>Quantité:</label><input name="quantite" type="number">
+            <label>ID Magasin:</label><input name="magasin_id" type="text">
+            <button type="submit">Demander réapprovisionnement</button>
+        </form>
+
+        <h3>Stock du Centre Logistique</h3>
+        <table>
+            <tr>
+                <th>ID Produit</th>
+                <th>Nom</th>
+                <th>Quantité</th>
+            </tr>
+            {% for item in stock %}
+            <tr>
+                <td>{{ item.produit_id }}</td>
+                <td>{{ item.nom }}</td>
+                <td>{{ item.quantite }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h3>Voir le stock d’un magasin</h3>
+        <form method="post" action="/execute">
+            <input type="hidden" name="action" value="consulter_stock_magasin">
+            <input type="hidden" name="section" value="magasin">
+            <label>ID Magasin:</label>
+            <input name="magasin_id" type="number" min="1" max="5" required>
+            <button type="submit">Voir le stock</button>
+        </form>
+
+        {% if stock_magasin %}
+        <h4>Stock du magasin sélectionné :</h4>
+        <table>
+            <tr>
+                <th>ID Produit</th>
+                <th>Nom</th>
+                <th>Quantité</th>
+            </tr>
+            {% for item in stock_magasin %}
+            <tr>
+                <td>{{ item.produit_id }}</td>
+                <td>{{ item.nom }}</td>
+                <td>{{ item.quantite }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+        <h3>Vendre un produit</h3>
+        <form action="/execute" method="post">
+            <input type="hidden" name="action" value="vendre_produit">
+            <input type="hidden" name="section" value="magasin">
+
+            <label for="produit_id_vente">ID du produit :</label>
+            <input type="number" name="produit_id" id="produit_id_vente" required>
+
+            <label for="quantite_vente">Quantité :</label>
+            <input type="number" name="quantite" id="quantite_vente" required>
+
+            <label for="magasin_id_vente">ID du magasin :</label>
+            <input type="number" name="magasin_id" id="magasin_id_vente" required>
+
+            <button type="submit">Vendre</button>
+        </form>
+
+    </div>
+
+    <div id="logistique" class="action-section" style="display:none">
+        <h2>Actions Logistique</h2>
+        <form method="get" action="/demande_appro">
+            <input type="hidden" name="action" value="demande_appro">
+            <button type="submit">Demander approvisionnement</button>
+        </form>
+        {% for demande in demandes %}
+        <p>Demande magasin {{ demande.magasin.nom }} : {{ demande.quantite }} x {{ demande.produit.nom }}</p>
+        <form method="post" action="/valider_demande">
+            <input type="hidden" name="demande_id" value="{{ demande.id }}">
+            <button type="submit">Valider</button>
+        </form>
+        {% endfor %}
+
+
+    </div>
+</body>
+
+</html>

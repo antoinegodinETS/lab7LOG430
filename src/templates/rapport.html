@@ -1,0 +1,61 @@
+<!-- templates/rapport.html -->
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport Consolidé des Ventes</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <h1>Rapport Consolidé des Ventes</h1>
+
+    <h2>Ventes par Magasin</h2>
+    <table>
+        <tr>
+            <th>Magasin</th>
+            <th>Total ($)</th>
+        </tr>
+        {% for nom, total in data.ventes_par_magasin %}
+        <tr>
+            <td>{{ nom }}</td>
+            <td>{{ "%.2f"|format(total) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Produits les plus vendus</h2>
+    <table>
+        <tr>
+            <th>Produit</th>
+            <th>Quantité totale</th>
+        </tr>
+        {% for nom, quantite in data.produits_vendus %}
+        <tr>
+            <td>{{ nom }}</td>
+            <td>{{ quantite }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Stock Restant dans les Magasins</h2>
+    <table>
+        <tr>
+            <th>Magasin</th>
+            <th>Produit</th>
+            <th>Quantité</th>
+        </tr>
+        {% for magasin, produit, quantite in data.stock_restants %}
+        <tr>
+            <td>{{ magasin }}</td>
+            <td>{{ produit }}</td>
+            <td>{{ quantite }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br><a href="/execute">← Retour</a>
+</body>
+
+</html>

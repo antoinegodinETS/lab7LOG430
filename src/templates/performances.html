@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Performances des Magasins</title>
+</head>
+
+<body>
+    <h1>Tableau de Bord - Performances des Magasins</h1>
+
+    <h2>Chiffre d'affaires par magasin</h2>
+    <ul>
+        {% for id, montant in result.chiffre_affaires.items() %}
+        <li>Magasin {{ id }} : {{ montant }}$</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Ruptures de stock</h2>
+    <ul>
+        {% for produit in result.ruptures_stock %}
+        <li>{{ produit.nom }} (ID {{ produit.produit_id }}) au magasin {{ produit.magasin_id }} : {{ produit.quantite }}
+            restants</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Produits en surstock</h2>
+    <ul>
+        {% for produit in result.surstock %}
+        <li>{{ produit.nom }} (ID {{ produit.produit_id }}) au magasin {{ produit.magasin_id }} : {{ produit.quantite }}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Tendances hebdomadaires</h2>
+    {% for t in result.tendances_hebdo %}
+    <h3>{{ t.semaine }}</h3>
+    <p>Ventes: {{ t.ventes }}</p>
+    {% endfor %}
+</body>
+
+</html>

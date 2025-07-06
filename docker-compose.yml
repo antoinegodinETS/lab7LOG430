@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # === ANCIENS SERVICES ===
+  api:
+    build: .
+    stdin_open: true
+    tty: true
+    ports:
+      - "8003:8003"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+psycopg://lab2user:password@db:5432/lab2db
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8003 --reload
+
+  interface1:
+    build: .
+    ports:
+      - "8004:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://lab2user:password@db/lab2db
+    command: uvicorn src.interface:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+
+  interface2:
+    build: .
+    ports:
+      - "8005:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://lab2user:password@db/lab2db
+    command: uvicorn src.interface:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: lab2user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lab2db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  # === NOUVEAUX SERVICES ===
+  db_clients:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: clients_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: clients_db
+    volumes:
+      - db_clients_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
+  clients:
+    build: ./services/clients
+    depends_on:
+      - db_clients
+    environment:
+      - DATABASE_URL=postgresql://clients_user:password@db_clients:5432/clients_db
+    ports:
+      - "8001:8000"
+    # === BASES DE DONNÉES PANIER ===
+  db_panier1:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: panier_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: panier_db
+    volumes:
+      - db_panier1_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+
+  db_panier2:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: panier_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: panier_db
+    volumes:
+      - db_panier2_data:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+
+  # === PANIER x2 POUR LOAD BALANCING ===
+  panier1:
+    build: ./services/panier
+    depends_on:
+      - db_panier1
+    environment:
+      - DATABASE_URL=postgresql://panier_user:password@db_panier1:5432/panier_db
+    ports:
+      - "8010:8000"
+
+  panier2:
+    build: ./services/panier
+    depends_on:
+      - db_panier2
+    environment:
+      - DATABASE_URL=postgresql://panier_user:password@db_panier2:5432/panier_db
+    ports:
+      - "8011:8000"
+
+  db_commande:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: commande_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: commande_db
+    volumes:
+      - db_commande_data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"
+
+  commande:
+    build: ./services/commande
+    depends_on:
+      - db_commande
+    environment:
+      - DATABASE_URL=postgresql://commande_user:password@db_commande:5432/commande_db
+    ports:
+      - "8006:8000"
+
+  # === NOUVELLE GATEWAY ===
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8000"
+    depends_on:
+      - clients
+      - panier1
+      - panier2
+      - commande
+
+  # === OBSERVABILITÉ ===
+  prometheus:
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9091:9090"
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  # === REVERSE PROXY ===
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8088:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - interface1
+      - interface2
+
+volumes:
+  postgres_data:
+  grafana-storage:
+  db_clients_data:
+  db_panier1_data:
+  db_panier2_data:
+  db_commande_data:

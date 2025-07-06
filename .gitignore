@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+*.egg-info/
+venv/
+env/
+ENV/
+.venv/
+.vscode/
+
+# pytest cache
+.pytest_cache/
+
+# SQLite database
+pos.db
+
+# Docker
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CI/CD
+coverage.*
+htmlcov/
