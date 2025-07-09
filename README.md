@@ -8,19 +8,119 @@ Basée sur **FastAPI**, elle expose des **API RESTful** et propose une **interfa
 
 ## 🚀 Démarrage rapide
 
-1. **Installer les dépendances**
-2. **Initialiser la base de données**  
-   Les scripts `init_data.py` et `populate_ventes.py` sont automatiquement exécutés au lancement.  
-   👉 Pas besoin de lancer manuellement l'initialisation.
+### 1. Installer les dépendances :
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd src
+```
 
-3. **Lancer les services avec Docker Compose**  
-   - Interface accessible : [http://localhost:8088](http://localhost:8088)  
-   - API principale : [http://localhost:8003/docs](http://localhost:8003/docs)  
-   - API Gateway : [http://localhost:8080](http://localhost:8080)
+### 2. Lancer les services avec Docker Compose
+```bash
+docker-compose up --build
+```
+
+### Interfaces disponibles
+- Interface 1 : [http://localhost:8004](http://localhost:8004)
+- Interface 2 : [http://localhost:8005](http://localhost:8005)
+
+## 📦 Exemple d’appel de la saga via cURL
+
+Le service **orchestrateur** expose une route `POST /saga/commande/` qui déclenche une saga complète de validation de commande (stock + paiement).
+
+### ✅ Cas de succès — Commande complète et confirmée
+
+```bash
+curl -X POST http://localhost:8002/saga/commande/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "produits": [
+      {"produit_id": 1, "quantite": 1},
+      {"produit_id": 2, "quantite": 1}
+    ]
+  }'
+```
+
+Cette commande simule l’achat de produits disponibles en stock avec un montant raisonnable.  
+Elle passe par toutes les étapes de la saga :
+
+- 🟢 Création (`CREEE`)
+- 🟢 Vérification du stock (`STOCK_VERIFIE`)
+- 🟢 Réservation du stock (`STOCK_RESERVE`)
+- 🟢 Paiement réussi (`PAYEE`)
+- 🟢 Confirmation finale (`CONFIRMEE`)
 
 ---
 
+### ❌ Cas d’échec — Stock insuffisant
+
+```bash
+curl -X POST http://localhost:8002/saga/commande/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "produits": [
+      {"produit_id": 2, "quantite": 999}  # Produit stock trop faible
+    ]
+  }'
+
+```
+
+Cette commande tente de commander un produit en quantité excessive.  
+Résultat :
+
+- 🔴 Échec à l’étape **de vérification du stock**
+- 🔁 Saga interrompue
+- ❌ Commande mise à jour à `ANNULEE`
+
+---
+
+### ❌ Cas d’échec — Paiement refusé
+
+```bash
+curl -X POST http://localhost:8002/saga/commande/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "produits": [
+      {"produit_id": 4, "quantite": 10}  # Suppose que le montant dépasse le solde
+    ]
+  }'
+
+```
+
+Cette commande passe la vérification et la réservation du stock, mais échoue au moment du paiement (ex. : montant trop élevé).  
+Comportement de la saga :
+
+- 🔁 Stock libéré automatiquement
+- ❌ Commande mise à jour à `ANNULEE`
+
 ## 🧱 Structure du projet
+
+Le projet est organisé en plusieurs services et composants pour assurer une architecture modulaire et scalable :
+
+### 📂 Services principaux
+- **Clients** : Gestion des comptes clients (CRUD).
+- **Panier** : Gestion des paniers d'achat avec support pour le load balancing.
+- **Commande** : Validation et suivi des commandes.
+- **Stock** : Vérification et réservation des stocks.
+- **Paiement** : Traitement des paiements.
+
+### 📂 Composants supplémentaires
+- **Orchestrateur** : Implémente les sagas pour coordonner les services.
+- **API Gateway** : Centralise les accès et assure la répartition de charge.
+- **Observabilité** : Monitoring avec Prometheus et visualisation avec Grafana.
+- **Reverse Proxy** : Nginx pour la répartition de charge et le routage.
+
+### 📂 Répartition des fichiers
+- `services/` : Contient les services individuels (clients, panier, commande, etc.).
+- `gateway/` : Configuration et code de l'API Gateway.
+- `src/` : Code source principal pour l'interface et les scripts.
+- `docs/` : Documentation et diagrammes UML.
+- `test/` : Tests unitaires et d'intégration.
+- `docker-compose.yml` : Configuration Docker pour orchestrer les services.
+
+Cette structure permet une séparation claire des responsabilités et facilite la maintenance et l'évolution
+
 
 ### ✅ Fonctionnalités principales
 
@@ -127,15 +227,6 @@ Le fichier `krakend.json` configure une **répartition de charge round-robin** e
 ```bash
 k6 run k6-lb.js
 ```
-
-## 📈 Résultats observables
-
-- **Latence** : mesurée via **Prometheus** / **Grafana**
-- **Disponibilité** : vérifiée via les logs centralisés
-- **Répartition de charge** : visualisée dans Grafana
-![Alt text](docs/latence.PNG?raw=true "Latence")
-![Alt text](docs/erreur5xx.PNG?raw=true "Erreur5xx")
----
 
 ## 📝 Licence
 

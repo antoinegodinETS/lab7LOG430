@@ -13,6 +13,8 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://lab2user:password@db:5432/lab2db
     command: uvicorn src.main:app --host 0.0.0.0 --port 8003 --reload
+    networks:
+      - backend
 
   interface1:
     build: .
@@ -23,6 +25,8 @@ services:
     command: uvicorn src.interface:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - db
+    networks:
+      - backend
 
   interface2:
     build: .
@@ -33,6 +37,8 @@ services:
     command: uvicorn src.interface:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - db
+    networks:
+      - backend
 
   db:
     image: postgres:15
@@ -44,8 +50,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5434:5432"
+    networks:
+      - backend
 
-  # === NOUVEAUX SERVICES ===
   db_clients:
     image: postgres:15
     environment:
@@ -56,6 +63,8 @@ services:
       - db_clients_data:/var/lib/postgresql/data
     ports:
       - "5435:5432"
+    networks:
+      - backend
 
   clients:
     build: ./services/clients
@@ -65,7 +74,9 @@ services:
       - DATABASE_URL=postgresql://clients_user:password@db_clients:5432/clients_db
     ports:
       - "8001:8000"
-    # === BASES DE DONNÉES PANIER ===
+    networks:
+      - backend
+
   db_panier1:
     image: postgres:15
     environment:
@@ -76,6 +87,8 @@ services:
       - db_panier1_data:/var/lib/postgresql/data
     ports:
       - "5436:5432"
+    networks:
+      - backend
 
   db_panier2:
     image: postgres:15
@@ -87,8 +100,9 @@ services:
       - db_panier2_data:/var/lib/postgresql/data
     ports:
       - "5438:5432"
+    networks:
+      - backend
 
-  # === PANIER x2 POUR LOAD BALANCING ===
   panier1:
     build: ./services/panier
     depends_on:
@@ -97,6 +111,8 @@ services:
       - DATABASE_URL=postgresql://panier_user:password@db_panier1:5432/panier_db
     ports:
       - "8010:8000"
+    networks:
+      - backend
 
   panier2:
     build: ./services/panier
@@ -106,6 +122,8 @@ services:
       - DATABASE_URL=postgresql://panier_user:password@db_panier2:5432/panier_db
     ports:
       - "8011:8000"
+    networks:
+      - backend
 
   db_commande:
     image: postgres:15
@@ -117,6 +135,8 @@ services:
       - db_commande_data:/var/lib/postgresql/data
     ports:
       - "5437:5432"
+    networks:
+      - backend
 
   commande:
     build: ./services/commande
@@ -126,8 +146,9 @@ services:
       - DATABASE_URL=postgresql://commande_user:password@db_commande:5432/commande_db
     ports:
       - "8006:8000"
+    networks:
+      - backend
 
-  # === NOUVELLE GATEWAY ===
   gateway:
     build: ./gateway
     ports:
@@ -137,8 +158,9 @@ services:
       - panier1
       - panier2
       - commande
+    networks:
+      - backend
 
-  # === OBSERVABILITÉ ===
   prometheus:
     image: prom/prometheus
     restart: unless-stopped
@@ -146,6 +168,8 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9091:9090"
+    networks:
+      - backend
 
   grafana:
     image: grafana/grafana:10.3.1
@@ -155,8 +179,9 @@ services:
       - prometheus
     volumes:
       - grafana-storage:/var/lib/grafana
+    networks:
+      - backend
 
-  # === REVERSE PROXY ===
   nginx:
     image: nginx:latest
     ports:
@@ -166,6 +191,37 @@ services:
     depends_on:
       - interface1
       - interface2
+    networks:
+      - backend
+
+  orchestrateur:
+    build: ./services/orchestrateur
+    depends_on:
+      - stock
+      - commande
+      - paiement
+    environment:
+      - STOCK_URL=http://stock:8000
+      - COMMANDE_URL=http://commande:8000
+      - PAIEMENT_URL=http://paiement:8000
+    ports:
+      - "8002:8000"
+    networks:
+      - backend
+
+  stock:
+    build: ./services/stock
+    ports:
+      - "8007:8000"
+    networks:
+      - backend
+
+  paiement:
+    build: ./services/paiement
+    ports:
+      - "8008:8000"
+    networks:
+      - backend
 
 volumes:
   postgres_data:
@@ -174,3 +230,7 @@ volumes:
   db_panier1_data:
   db_panier2_data:
   db_commande_data:
+
+
+networks:
+  backend:

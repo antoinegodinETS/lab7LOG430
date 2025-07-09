@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import BaseModel
 
 class CommandeBase(BaseModel):
@@ -12,3 +13,6 @@ class CommandeOut(CommandeBase):
 
     class Config:
         orm_mode = True
+
+class EtatPayload(BaseModel):
+    etat: Literal["CONFIRMEE", "ANNULEE"]

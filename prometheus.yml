@@ -17,3 +17,7 @@ scrape_configs:
   - job_name: 'fastapi-interface'
     static_configs:
       - targets: ['interface1:8000', 'interface2:8000']
+  
+  - job_name: 'orchestrateur'
+    static_configs:
+      - targets: ['orchestrateur:8000']
