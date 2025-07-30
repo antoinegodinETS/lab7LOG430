@@ -2,10 +2,15 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY . .
-RUN pip install --no-cache-dir fastapi uvicorn sqlalchemy psycopg2-binary prometheus_fastapi_instrumentator
+COPY services/commande/. /app
+# Copier event_store dans l'image pour permettre l'import
+COPY services/event_store /app/services/event_store
 
-ENV PYTHONPATH=/app
+# Installation des dépendances
+RUN pip install --no-cache-dir fastapi uvicorn sqlalchemy psycopg2-binary prometheus_fastapi_instrumentator kafka-python
+
+# 👇 Ajout du chemin /app au PYTHONPATH pour permettre l'import de 'services'
+ENV PYTHONPATH="${PYTHONPATH}:/app"
 
 EXPOSE 8000
 

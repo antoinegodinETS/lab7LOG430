@@ -1,11 +1,15 @@
 from typing import Literal
 from pydantic import BaseModel
 
+class ProduitCommande(BaseModel):
+    id: int
+    quantite: int
+
 class CommandeBase(BaseModel):
     client_id: int
 
 class CommandeCreate(CommandeBase):
-    pass
+    produits: list[ProduitCommande]
 
 class CommandeOut(CommandeBase):
     id: int
