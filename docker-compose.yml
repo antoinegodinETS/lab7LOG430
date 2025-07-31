@@ -226,6 +226,18 @@ services:
     networks:
       - backend
 
+  event_store:
+      build: ./services/event_store
+      depends_on:
+        - db_event_store
+        - kafka
+      environment:
+        - DATABASE_URL=postgresql://event_user:password@db_event_store:5432/event_db
+      ports:
+        - "8012:8000"
+      networks:
+        - backend
+
   db_event_store:
     image: postgres:15
     environment:
@@ -261,17 +273,31 @@ services:
     networks:
       - backend
 
-  event_store:
-    build: ./services/event_store
-    depends_on:
-      - db_event_store
-      - kafka
+  db_commande_query:
+    image: postgres:15
     environment:
-      - DATABASE_URL=postgresql://event_user:password@db_event_store:5432/event_db
+      POSTGRES_USER: query_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: query_db
     ports:
-      - "8012:8000"
+      - "5441:5432"
     networks:
       - backend
+
+
+  commande_query:
+    build: ./services/commande_query
+    depends_on:
+      - db_commande_query
+      - kafka
+    environment:
+      - DATABASE_URL=postgresql://query_user:password@db_commande_query:5432/query_db
+    ports:
+      - "8013:8000"
+    networks:
+      - backend
+
+
 
 volumes:
   postgres_data:

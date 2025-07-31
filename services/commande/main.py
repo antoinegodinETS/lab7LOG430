@@ -5,6 +5,9 @@ from uuid import uuid4
 from datetime import datetime
 import json
 from kafka import KafkaProducer
+from prometheus_client import Counter, Histogram, start_http_server
+import time
+
 
 import models
 import schemas
@@ -15,6 +18,9 @@ import database
 from services.event_store.models import Evenement
 from services.event_store.publisher import publish_event
 
+start_http_server(8009)  # <- port différent pour chaque service
+
+events_emitted = Counter("events_emitted_total", "Nombre d'événements émis", ["type"])
 
 app = FastAPI()
 Instrumentator().instrument(app).expose(app)
@@ -39,23 +45,28 @@ def get_db():
 def creer_commande(commande: schemas.CommandeCreate, db: Session = Depends(get_db)):
     created = crud.valider_commande(db, commande)
 
+    now = datetime.utcnow()
     event = {
         "id": str(uuid4()),
         "type": "CommandeCreee",
         "source": "commande",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": now.isoformat(),
         "payload": {
             "commande_id": created.id,
-            "produits": [p.dict() for p in commande.produits]
+            "produits": [p.dict() for p in commande.produits],
+            "timestamp": now.timestamp()  # Pour latence
         }
     }
 
-    # Publier l'événement dans Kafka
     producer = get_producer()
     producer.send("commande.events", event)
     producer.flush()
 
+    # Incrément métrique
+    events_emitted.labels(type="CommandeCreee").inc()
+
     return created
+
 
 
 

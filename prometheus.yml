@@ -2,22 +2,26 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: 'clients'
+  - job_name: "clients"
     static_configs:
-      - targets: ['clients:8000']
+      - targets: ["clients:8000"]
 
-  - job_name: 'commande'
+  - job_name: "commande"
     static_configs:
-      - targets: ['commande:8000']
+      - targets: ["commande:8000"]
 
-  - job_name: 'panier'
+  - job_name: "panier"
     static_configs:
-      - targets: ['panier:8000']
+      - targets: ["panier:8000"]
 
-  - job_name: 'fastapi-interface'
+  - job_name: "fastapi-interface"
     static_configs:
-      - targets: ['interface1:8000', 'interface2:8000']
-  
-  - job_name: 'orchestrateur'
+      - targets: ["interface1:8000", "interface2:8000"]
+
+  - job_name: "orchestrateur"
     static_configs:
-      - targets: ['orchestrateur:8000']
+      - targets: ["orchestrateur:8000"]
+
+  - job_name: "commande_query"
+    static_configs:
+      - targets: ["commande_query:8014"]
