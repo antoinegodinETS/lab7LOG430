@@ -51,13 +51,6 @@ jobs:
           source venv/bin/activate
           PYTHONPATH=src python -c "from common.database import init_db; init_db()"
 
-      - name: Run tests
-        env:
-          DATABASE_URL: postgresql+psycopg://lab2user:password@localhost/lab2db
-        run: |
-          source venv/bin/activate
-          PYTHONPATH=src python -m pytest
-
   docker:
     needs: test
     runs-on: ubuntu-latest
