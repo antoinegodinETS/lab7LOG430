@@ -1,6 +1,7 @@
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
 
@@ -55,4 +56,6 @@ def calculer_prix_total(cmd: Commande):
 @app.get("/health")
 def health():
     return {"status": "stock ok"}
+
+Instrumentator().instrument(app).expose(app)
 

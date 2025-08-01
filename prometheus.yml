@@ -25,3 +25,11 @@ scrape_configs:
   - job_name: "commande_query"
     static_configs:
       - targets: ["commande_query:8014"]
+
+  - job_name: "paiement"
+    static_configs:
+      - targets: ["paiement:8000"]
+
+  - job_name: "stock"
+    static_configs:
+      - targets: ["stock:8000"]

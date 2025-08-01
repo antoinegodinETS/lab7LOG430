@@ -1,6 +1,7 @@
 # services/paiement/main.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
 
@@ -22,3 +23,5 @@ def effectuer_paiement(paiement: PaiementDemande):
 @app.get("/health")
 def health():
     return {"status": "paiement ok"}
+
+Instrumentator().instrument(app).expose(app)
